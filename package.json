@@ -3,6 +3,8 @@
   "description": "The best Grunt plugin ever.",
   "version": "0.1.0",
   "homepage": "https://github.com/drdk/grunt-dr-player",
+  "private": true,
+  "main": "",
   "author": {
     "name": "DR",
     "email": "krta@dr.dk"
@@ -26,7 +28,7 @@
   "scripts": {
     "test": "grunt test"
   },
-  "devDependencies": {
+  "dependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-uglify": "^0.5.1",
     "grunt-contrib-less": "^0.11.4"
