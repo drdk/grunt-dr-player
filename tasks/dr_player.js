@@ -10,41 +10,82 @@
 
 module.exports = function(grunt) {
 
-  // Please see the Grunt documentation for more information regarding task
-  // creation: http://gruntjs.com/creating-tasks
+  grunt.registerMultiTask("dr-player", "Main subtask controller", function() {
 
-  grunt.registerMultiTask('dr_player', 'The best Grunt plugin ever.', function() {
-    // Merge task-specific and/or target-specific options with these defaults.
-    var options = this.options({
-      punctuation: '.',
-      separator: ', '
+    var config = grunt.config.get("dr-player")[this.name];
+
+    config.options = _.defaults(config.options, {
+      tempPath: config.options.rootPath + "dr-player-tmp/",
+      jsPath: config.options.rootPath + "src/assets/libs/dr-player/",
+      cssPath: config.options.rootPath + "src/assets/css/dr-player/"
     });
 
-    // Iterate over all specified file groups.
-    this.files.forEach(function(f) {
-      // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files (if nonull was set).
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        } else {
-          return true;
+    var tasksConfig = {
+
+      uglify: {
+        files: {},
+        development: {
+          options: {
+            compress: false,
+            mangle: false,
+            beautify: true
+          },
+          files: '<%=uglify.files%>'
+        },
+        production: {
+          options: {
+            compress: true,
+            mangle: false,
+            sourceMap: true
+          },
+          files: '<%=uglify.files%>'
         }
-      }).map(function(filepath) {
-        // Read file source.
-        return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
+      },
 
-      // Handle options.
-      src += options.punctuation;
+      less: {
+        files: {
+          cssPath: 'src/css/index.less'
+        },
+        development: {
+          options: {
+            compress: false,
+            sourceMap: true,
+            outputSourceFiles: true
+          },
+          files: '<%=less.files%>'
+        },
+        production: {
+          options: {
+            compress: true,
+            sourceMap: true,
+            cleancss: true,
+            outputSourceFiles: false
+          },
+          files: '<%=less.files%>'
+        }
+      }
+    };
 
-      // Write the destination file.
-      grunt.file.write(f.dest, src);
+    (function /*processYAMLfile*/ () {
+      grunt.file.expand('*.js.yaml').forEach(function (file) {
+        var index, path;
+        var outputName = file.slice(0, file.length - 5);
+        var concatFiles = grunt.file.readYAML(file).files;
+        for (index in concatFiles) {
+          path = concatFiles[index];
+          concatFiles[index] = file.slice(0, file.lastIndexOf('/')) + '/' + path;
+        }
+        tasksConfig.uglify.files[outputName] = concatFiles;
+      });
+    })();
 
-      // Print a success message.
-      grunt.log.writeln('File "' + f.dest + '" created.');
-    });
+    grunt.initConfig(tasksConfig);
+
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-less');
+
+    grunt.task.run('uglify:production', 'less:production');
+
   });
-
 };
